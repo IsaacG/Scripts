@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# By Isaac Good
+# Reads filenames from the arguements (eg *)
+# Prints them to a file in pairs
+# A FROM line and a TO line
+# Then it reads the lines back and does a mv FROM TO
+
+tmp=$(mktemp)
+
+quit () {
+	rm "$tmp"
+	exit $1
+}
+
+warn () {
+	echo "$@" >&2
+}
+die () {
+	echo "$@" >&2
+	quit 1
+}
+
+for arg; do
+	echo "FROM $arg"
+	echo "TO   $arg"
+	echo
+done > "$tmp"
+
+EDITOR="${EDITOR:-/usr/bin/vim}"
+$EDITOR "$tmp"
+
+if [[ ! -f $tmp ]] ; then
+	die "Tmp file gone!"
+fi
+
+# FROM here
+FROM=""
+# TO here
+TO=""
+# Expecting a from or to?
+EXPECT="FROM"
+
+# Only parse FROM and TO lines
+egrep -e '^FROM' -e '^TO' "$tmp" | while read i; do
+	# If we are expecting a FROM, check the line says FROM and the file exists
+	if [[ $EXPECT = "FROM" ]] ; then
+		if [[ $i = "FROM "* ]]; then
+			FROM="${i#FROM }"
+			if [[ -f $FROM ]] ; then
+				# We now expect a TO to match this FROM file
+				EXPECT="TO"
+			else
+				warn "File does not exist! [$i]"
+			fi
+		else
+			warn "Expected a FROM and got a TO! [$i]"
+		fi
+	# If expecting a TO...
+	else
+		if [[ $i = "TO   "* ]]; then
+			TO="${i#TO   }"
+			if [[ ! -f $TO ]] ; then
+				mv -v "$FROM" "$TO"
+			else
+				# Don't overwrite!
+				warn "TO file exists already! [$i]"
+			fi
+		else
+			warn "Expected a TO and got a FROM! [$i]"
+		fi
+		# Expect a FROM now
+		EXPECT="FROM"
+	fi
+done
+
+quit 0
+
