@@ -11,7 +11,7 @@
 # q quits
 # u to put URLs one by one into xclip
 
-in=/tmp/t
+in="${1:-/tmp/t}"
 
 # Print a new feed item over the old line
 print () {
