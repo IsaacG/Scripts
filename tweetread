@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#
 # Read Twitter stuffs from a file.
 # Twitter -> bitlbee -> irssi -> file -> this script for reading large amounts of lines
 # Display lines one by one with a scroll up/down. Toggle save to keep for later. And xclip integration for visiting links
@@ -10,6 +11,12 @@
 # s toggles save (displays on quit for later use)
 # q quits
 # u to put URLs one by one into xclip
+#
+
+#
+# TODO
+# Should have more robust handling around input file. And output... Save to input file with confirmation?
+#
 
 in="${1:-/tmp/t}"
 
