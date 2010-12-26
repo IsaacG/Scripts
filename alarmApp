@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# 
+# Alarm application. For setting a whole lot of timed reminders (eg when playing Travian and you got 20 things to do at specific times).
+# Usage: enter a delay followed by a reminder to be reminded of that thing in $delay time.
+# Delay can be NUM[smh]
+# Use "-" for message to reuse the last displayed reminder
+# Does pretty colored output using figlet with colors for past/pending/future reminders
+# Tweaked heavily for Travian to let me periodically handle a bunch of tasks
+# 
+
+# TODO
+# Put the input at the top
+# Have the updates run in a loop in bg and not touch the top 4 lines
+# Only refresh is stat shows file is new - or nextEvent is up -> store that timestamp
+# Show event time as countdown format
+
+alarmfile="$HOME/.alarm"
+maxBack=$((15*60))
+maxBacN=5
+lastTime=$(date +%s)
+(( $# == 1 )) && (( lastTime = lastTime - $1 ))
+lastMsg=''
+unset TMOUT
+
+
+COL_NORM="$(tput setaf 9)"
+COL_RED="$(tput setaf 1)"
+COL_GREEN="$(tput setaf 2)"
+COL_YELLOW="$(tput setaf 3)"
+COL_BLUE="$(tput setaf 4)"
+COL_MAGENTA="$(tput setaf 5)"
+COL_CYAN="$(tput setaf 6)"
+COL_WHITE="$(tput setaf 7)"
+
+ATTR_DIM="$(tput dim)"
+#ATTR_BRIGHT="$(tput bright)"
+
+timefrmt () {
+	local now
+	local _time
+	local v
+	_time="$1"
+	now=$(date +%s)
+	(( now > _time )) && v=$(( now - _time )) || v=$(( _time - now ))
+	printf "%2dd %2d:%02d:%02d" $(( v/(60*60*24) )) $(( v/(60*60) % 24 )) $(( v / 60 % 60 )) $(( v % 60 ))
+}
+
+ruler () {
+	printf -- "%s\n" "----------------------" 
+}
+
+printPast () {
+	local msgs="$*"
+	echo -n "$COL_YELLOW"
+	[[ $msgs ]] && { printf -- "%s" "$msgs" | tail -n $maxBacN ; }
+	ruler
+}
+
+printFig () {
+	local doFig="$1"
+	shift
+	local msgs="$1"
+	[[ $msgs ]] || return
+	echo -n "$COL_RED"
+	(( doFig )) && figlet <<< "$msgs"
+	printf -- "%s\n\n" "$msgs"
+}
+
+printQueue () {
+	local -a msgs=("$@")
+	echo -n "$COL_RED"
+	[[ $msgs ]] && printf -- "%s\n" "${msgs[@]}"
+	ruler
+}
+
+printFuture () {
+	local msgs="$*"
+	echo -n "$COL_BLUE"
+	[[ $msgs ]] && printf -- "%s" "$msgs"
+	ruler
+}
+
+cleanup () {
+	local cutoff=$(date +%s)
+	((cutoff -= 2*maxBack))
+	local tmp=$(mktemp)
+	awk -vco="$cutoff" '$1 >= co' "$alarmfile" > "$tmp"
+	mv "$tmp" "$alarmfile"
+}
+
+#clear () { : ; }
+
+displayThread () {
+	divided=0
+	now=$(date +%s)
+
+	local -a msgs
+
+	# 0 for past events
+	# 1 for queued messages
+	# 2 for future events
+	local stage=0
+	{
+		while read _time _msg ; do
+			# Skip empty lines
+			[[ $_time ]] || { echo EMPTY TIME ; continue ; }
+			[[ $_msg ]] || { echo EMPTY MSG ; continue ; }
+
+			# Skip old lines - older than maxBack old
+			(( _time + maxBack < now )) && (( _time < lastTime )) && continue
+			
+			# Progress from stage 0 to 1 when we get to a time we have not yet processed but is not in the future
+			(( stage == 0 && _time <= now && _time > lastTime )) && stage=1
+
+			# Transition to future (from 0 or 1) when we hit a future timestamps
+			((_time > now)) && stage=2
+
+			if ((stage == 1)) ; then # Treat queued messages differently - drop the timestamp
+				msgs[stage]+="$(printf "%s\n" "$_msg")"$'\n'
+				lastTime=$_time # Pick up the last timestamp of the queued events for next file read
+			else # Past or future messages keep their timestamp
+				msgs[stage]+="$(printf "%s\t%s\n" "$(timefrmt $_time)" "$_msg")"$'\n'
+			fi
+		done < <(sort -n "$alarmfile")
+
+if true; then
+
+		if [[ ${msgs[1]} ]] ; then
+			# Process the queued events
+			# Print the past, top item, rest of queued and future messages
+			# Top queued gets set to $lastMsg and figlet and dropped from queue
+			local -a queue
+			printf '\a' # Beep! We got events
+
+			#IFS=$'\n' read -r -a queue -d '' < <(printf -- "%s" "${msgs[1]}" | sort)
+			mapfile -t queue < <(printf -- "%s" "${msgs[1]}" | sort)
+
+			local size="${#queue[@]}"
+			while (( $size )) ; do # First loop over queued messages. Afterwards will show past/future list
+				clear
+				printPast "${msgs[0]}"
+				printFig 1 "${queue[0]}"
+				lastMsg="${queue[0]}"
+				printQueue "${queue[@]:1}"
+				printFuture "${msgs[2]}"
+				printFig 0 "${queue[0]}"
+				printf "\n"
+
+				# pop the top and recount
+				queue=("${queue[@]:1}")
+				size="${#queue[@]}"
+
+				# Wait for ENTER and process new items
+				read 
+
+				while processInput ; do : ; done
+			done
+			displayThread
+		else
+			clear
+			printPast "${msgs[0]}"
+			printFuture "${msgs[2]}"
+			printf "\n\n"
+		fi
+else
+	for i in {0..3} ; do
+		echo "i = $i"
+		printf --  "[${msgs[i]}]\n"
+	done
+fi
+
+	} 
+}
+
+warn () {
+	echo "$@" >&2
+	echo >&2
+}
+
+getTime () {
+	arg="$1"
+	[[ $arg ]] || { warn "Didn't provide a param" ; return 1; }
+	if [[ $arg = *[smh] ]] ; then
+		unit="${arg: -1:1}"
+		arg="${arg%[smh]}"
+	else
+		unit=s
+	fi
+	[[ $unit = "s" ]] && { unit=second; mult=1  ; }
+	[[ $unit = "m" ]] && { unit=minute; mult=60 ; }
+	[[ $unit = "h" ]] && { unit=hour; mult=3600 ; }
+
+	[[ ! $arg || $arg = *[^[:digit:].]* ]] && { warn "Invalid delay value" ; return 1; }
+
+	[[ $arg = *[.]* ]] && { arg=$(bc <<< "scale=0; $mult * $arg"); unit=second; }
+	
+	date +%s -d "+$arg $unit"
+}
+
+processInput ()
+{
+	echo -n "$COL_NORM"
+	read -e -t 60 -p "Delay: " delay 
+	[[ $delay ]] || return 1
+
+	time=$(getTime "$delay") || return 0
+	read -e -p "Message: " msg
+	[[ ! $msg ]] && { warn "No alert" ; return 0 ; }
+	[[ $msg = "-" ]] && { msg=$lastMsg; echo "Using $msg" ; }
+
+	printf "%d %s\n" "$time" "$msg" >> "$alarmfile"
+	echo "Alert added"
+	return 0
+}
+
+
+touch "$alarmfile"
+cleanup
+displayThread
+while : ; do 
+	processInput || displayThread
+done
