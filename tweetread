@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Read Twitter stuffs from a file.
+# Twitter -> bitlbee -> irssi -> file -> this script for reading large amounts of lines
+# Display lines one by one with a scroll up/down. Toggle save to keep for later. And xclip integration for visiting links
+#
+# Reads data from $in
+# space/enter/j/n for next
+# k/p for previous
+# s toggles save (displays on quit for later use)
+# q quits
+# u to put URLs one by one into xclip
+
+in=/tmp/t
+
+# Print a new feed item over the old line
+print () {
+	tput el1
+	[[ ${save[index]} ]] && color=$(tput setaf 6) || color="$(tput setaf 9)"
+	printf "\r%s%d/%d %s%s%s" "$(tput setaf 1)" $((index+1)) $max "$color" "${lines[index]}" "$(tput setaf 9)"
+}
+
+
+lines=()
+save=()
+# The tweets to serve up
+while read l ; do [[ $l ]] && lines+=("$l") ; done < "$in"
+lines+=("$(tput setaf 1)No more items$(tput setaf 9)")
+
+index=0
+max="${#lines[@]}"
+
+clear
+# Starting point and first item
+tput cup 10 0
+tput setaf 9
+print
+
+shopt -s nocasematch
+while read -sN1 ; do
+	case "$REPLY" in
+		"" | [nj] | " " ) # Next
+			((index < max - 1 && index++))
+			print
+			;;
+		[pk]) # Back/prev
+			((index > 0 && index--))
+			print
+			;;
+		s) # Toggle save an item. Displayed on quit
+			[[ ${save[index]} ]] && unset save[index] || save[index]=1
+			print
+			;;
+		q | ) # Quit, printing saved items
+			printf "\n\n"
+			for i in "${!save[@]}" ; do
+				printf "%s\n" "${lines[i]}"
+			done
+			exit
+			;;
+		u ) # Move a URL to clip
+			for word in ${lines[index]} ; do # Yay! Intentional word splitting
+				! [[ $word = http* || $word = www* ]] && continue
+				xclip -i <<< "$word"
+				tput el1
+				printf "\rURL %s%s%s -> press any key to continue" "$(tput setaf 4)" "$word" "$(tput setaf 9)"
+				read -N1
+			done
+			print
+			;;
+	esac
+done
+		
