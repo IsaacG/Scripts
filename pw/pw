@@ -1,0 +1,52 @@
+#! /usr/bin/perl
+
+
+use strict;
+use warnings;
+
+use CGI;
+use Digest::MD5  qw/md5 md5_hex md5_base64/;
+use Digest::SHA1 qw/sha1 sha1_hex sha1_base64/;
+
+use constant SALT_FILE => '/home/goodi/bin/pw/salt';
+my $PW_LENGTH = 8;
+
+sub makePassword
+{
+    my ( $master, $other ) = @_;
+
+    $master = $ENV{ 'MAINPASSWORD' };
+
+    open FH, "<" . SALT_FILE;
+    my $salt = <FH>;
+	chomp $salt;
+    close FH;
+
+	# my $md5 = sha1_hex( $other, md5( $master, md5( $salt ) ), $salt ) ;
+	my $md5 = sha1_base64( $other, md5( $master, md5( $salt, $PW_LENGTH ) ), $salt ) ;
+    # $md5 =~ tr/a-z/A-Z/;
+    # return substr( $md5, 0, $PW_LENGTH ) . " ($PW_LENGTH)";
+    return substr( $md5, 0, $PW_LENGTH );
+}
+
+sub main
+{
+	my $site;
+
+	if ( $ARGV[0] ) 
+	{
+		$site = $ARGV[0];
+	}
+	else
+	{
+		print "Site: ";
+		$site = <>;
+		chomp $site;
+	}
+
+	$PW_LENGTH = $ARGV[1] if ( $ARGV[1] );
+
+    print makePassword( "master", $site ), "\n";
+}
+
+main();

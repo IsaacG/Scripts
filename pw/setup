@@ -1,0 +1,12 @@
+#! /bin/bash
+
+echo Password?
+
+stty -echo; read -e MAINPASSWORD; stty echo
+export MAINPASSWORD
+export TMOUT=300
+/usr/bin/clear
+bash --rcfile /home/goodi/bin/pw/bashrc
+/usr/bin/clear
+unset MAINPASSWORD
+unset TMOUT
