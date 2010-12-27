@@ -23,14 +23,17 @@ in="${1:-/tmp/t}"
 
 # Print a new feed item over the old line
 print () {
-	tput el1
+	tput clear 
+	tput cup $((size/3)) 1
+
 	[[ ${save[index]} ]] && color=$(tput setaf 6) || color="$(tput setaf 9)"
-	printf "\r%s%d/%d %s%s%s" "$(tput setaf 1)" $((index+1)) $max "$color" "${lines[index]}" "$(tput setaf 9)"
+	printf "%s%d/%d %s%s%s" "$(tput setaf 1)" $((index+1)) $max "$color" "${lines[index]}" "$(tput setaf 9)"
+	tput hpa vpa
 }
 
 reset_screen () {
-	clear
-	tput cup 10 0
+	tput civis # Make cursor invisible
+	size=$(tput lines)
 	tput setaf 9
 	print
 }
@@ -38,7 +41,7 @@ reset_screen () {
 lines=()
 save=()
 # The tweets to serve up
-while read l ; do [[ $l ]] && lines+=("$l") ; done < "$in"
+while read -r l ; do [[ $l ]] && lines+=("$l") ; done < "$in"
 lines+=("$(tput setaf 1)No more items$(tput setaf 9)")
 
 index=0
@@ -70,6 +73,7 @@ while read -sN1 ; do
 			for i in "${!save[@]}" ; do
 				printf "%s\n" "${lines[i]}"
 			done
+			tput cnorm # Make cursor visible again
 			exit
 			;;
 		u ) # Move a URL to clip
