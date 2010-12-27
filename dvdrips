@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Pull the most recent N articles from TorrentFreak's weekly Top 10 Most Pirated Movies from newsbeuter's RSS DB
+# Count and sort by how many times each title made it into the list
+# A great movie suggestion algorithm?
+#
+
+if ! (($#)) ; then
+	echo "Usage: $0 [last N weeks to pull]"
+	exit
+fi
+
+html2pdbtxt <(sqlite3 cache.db <<< "SELECT content FROM rss_item WHERE feedurl = 'http://torrentfreak.com/category/dvdrip/feed/' ORDER BY pubDate DESC LIMIT $1;" ) | awk '
+	$1 == "10" { weeks++ }
+	$1 ~ /^[1-9]$/ || $1 == "10" {
+		$1 = ""
+		gsub(/^ */, "")
+		gsub(/^\(new\) */, "")
+		gsub(/^\([0-9&]\) */, "")
+		gsub(/[0-9]\.[0-9] \/ trailer *$/, "")
+		gsub(/\([^ ]*\) *$/, "")
+		list[$0]++
+		count++
+	}
+	END {
+		print count " items"
+		for (i in list) {
+			printf("%d %s\n", list[i], i) | "sort -nr"
+		}
+	}
+' | less
