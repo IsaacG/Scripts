@@ -11,6 +11,7 @@
 # s toggles save (displays on quit for later use)
 # q quits
 # u to put URLs one by one into xclip
+# l to refresh. Lazy way out of issue with long lines that wrap around...
 #
 
 #
@@ -27,6 +28,12 @@ print () {
 	printf "\r%s%d/%d %s%s%s" "$(tput setaf 1)" $((index+1)) $max "$color" "${lines[index]}" "$(tput setaf 9)"
 }
 
+reset_screen () {
+	clear
+	tput cup 10 0
+	tput setaf 9
+	print
+}
 
 lines=()
 save=()
@@ -37,11 +44,8 @@ lines+=("$(tput setaf 1)No more items$(tput setaf 9)")
 index=0
 max="${#lines[@]}"
 
-clear
 # Starting point and first item
-tput cup 10 0
-tput setaf 9
-print
+reset_screen
 
 shopt -s nocasematch
 while read -sN1 ; do
@@ -57,6 +61,9 @@ while read -sN1 ; do
 		s) # Toggle save an item. Displayed on quit
 			[[ ${save[index]} ]] && unset save[index] || save[index]=1
 			print
+			;;
+		l) # Reset/refresh screen
+			reset_screen
 			;;
 		q | ) # Quit, printing saved items
 			printf "\n\n"
