@@ -19,7 +19,7 @@
 # Should have more robust handling around input file. And output... Save to input file with confirmation?
 #
 
-in="${1:-/tmp/t}"
+file="${1:-/tmp/t}"
 
 # Print a new feed item over the old line
 print () {
@@ -41,7 +41,7 @@ reset_screen () {
 lines=()
 save=()
 # The tweets to serve up
-while read -r l ; do [[ $l ]] && lines+=("$l") ; done < "$in"
+while read -r l ; do [[ $l ]] && lines+=("$l") ; done < "$file"
 lines+=("$(tput setaf 1)No more items$(tput setaf 9)")
 
 index=0
@@ -70,9 +70,15 @@ while read -sN1 ; do
 			;;
 		q | ) # Quit, printing saved items
 			printf "\n\n"
-			for i in "${!save[@]}" ; do
-				printf "%s\n" "${lines[i]}"
-			done
+			if (( ${#save} )) ; then 
+				# Put together the saved entries
+				out=()
+				for i in "${!save[@]}" ; do out+=( "${lines[i]}" ) ; done
+				# Write out saved entires to STDOUT or $file
+				read -n1 -p "Write out saved entries to file $file? [y/N] "
+				[[ $REPLY = [yY] ]] && printf "%s\n" "${out[@]}" > "$file" || printf "%s\n" "${out[@]}"
+			fi
+
 			tput cnorm # Make cursor visible again
 			exit
 			;;
