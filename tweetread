@@ -76,7 +76,12 @@ while read -sN1 ; do
 				for i in "${!save[@]}" ; do out+=( "${lines[i]}" ) ; done
 				# Write out saved entires to STDOUT or $file
 				read -n1 -p "Write out saved entries to file $file? [y/N] "
+				printf "\n"
 				[[ $REPLY = [yY] ]] && printf "%s\n" "${out[@]}" > "$file" || printf "%s\n" "${out[@]}"
+			else
+				read -n1 -p "Clear file $file? [y/N] "
+				printf "\n"
+				[[ $REPLY = [yY] ]] && : > "$file"
 			fi
 
 			tput cnorm # Make cursor visible again
@@ -86,8 +91,9 @@ while read -sN1 ; do
 			for word in ${lines[index]} ; do # Yay! Intentional word splitting
 				! [[ $word = http* || $word = www* ]] && continue
 				xclip -i <<< "$word"
-				tput el1
-				printf "\rURL %s%s%s -> press any key to continue" "$(tput setaf 4)" "$word" "$(tput setaf 9)"
+				tput clear 
+				tput cup $((size/3)) 1
+				printf "URL %s%s%s -> press any key to continue" "$(tput setaf 4)" "$word" "$(tput setaf 9)"
 				read -N1
 			done
 			print
