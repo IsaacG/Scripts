@@ -1,0 +1,45 @@
+#!/bin/bash
+files=(*.JPG)
+last="${#files[@]}"
+
+# Build the index
+{
+	printf '<head><title>index</title></head>\n'
+	printf '<body>\n\t<ul>\n'
+	for i in "${files[@]}" ; do
+		printf '\t\t<li><a href="./%s" alt="%s">%s</li>\n' "${i%.*}.html" "$i" "$i"
+	done
+	printf '\t</ul>\n</body>'
+} > index.html
+chmod 644 index.html
+
+files=("${files[@]}" index.html)
+for ((i = 0; i < last; i++)) ; do
+	file="${files[i]}"
+	out="${file%.*}.html"
+	((i)) && prev="${files[i-1]}" 
+	((i)) && prev="${prev%.*}.html"
+	next="${files[i+1]}" 
+	next="${next%.*}.html"
+	{
+		# Header
+		printf '<head><title>%s</title></head>\n' "$file"
+
+		# Prev/next at top
+		((i)) && printf '<div align="left"><a href="./%s">&lt &lt Prev</a></div>\n' "$prev"
+		printf '<div align="right"><a href="./%s">Next &gt &gt</a></div>\n' "$next"
+
+		# Body
+		printf '<br><body>\n\t<div align="center">'
+		printf '<a href="./%s"><img src="./%s" alt="%s"/></a>' "$next" "$file" "$file"
+		printf '</div><br>\n'
+
+		# Prev/next on bottom
+		((i)) && printf '<div align="left"><a href="./%s">&lt &lt Prev</a></div>\n' "$prev"
+		printf '<div align="right"><a href="./%s">Next &gt &gt</a></div>\n' "$next"
+		
+		printf '</body>'
+	} > "$out"
+	chmod 644 "$out"
+done
+
