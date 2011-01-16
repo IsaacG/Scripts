@@ -8,6 +8,7 @@ use base qw(Bot::BasicBot::Pluggable::Module);
 
 use LWP::UserAgent;
 use HTTP::Headers;
+use Image::Size;
 
 our $VERSION = "0.3.1.5";
 
@@ -40,6 +41,19 @@ sub said
 		if ( $response->code() != 200 ) 
 		{
 			$message = "Failed to fetch document: " . $response->status_line();
+		}
+		elsif ( $response->header('content-type') =~ qr{^image/} )
+		{
+			my $content = $response->content;
+			my ($x, $y, $type) = Image::Size::imgsize(\$content);
+			if ($x and $y)
+			{
+				$message = "Image file (${x}x${y} - $type). Content Type: " . $response->header('content-type');
+			}
+			else
+			{
+				$message = "Unable to get sizing. Content Type: " . $response->header('content-type');
+			}
 		}
 		elsif ( $response->header('content-type') !~ qr{^text/html} )
 		{
