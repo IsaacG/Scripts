@@ -20,21 +20,31 @@
 #
 
 file="${1:-/tmp/t}"
+tmout="$TMOUT"
+unset TMOUT
+
+_size=$(tput lines)
+_red=$(tput setaf 1)
+_blue=$(tput setaf 4)
+_cyan=$(tput setaf 6)
+_def=$(tput setaf 9)
+
+_cur_reset=$(tput clear;tput cup $((_size/3)) 1)
+cur_reset () { printf "%s" "$_cur_reset" ;}
+
+_init="$(tput civis; tput setaf 9)" # Make cursor invisible, reset color
+init () { printf "%s" "$_init" ;}
 
 # Print a new feed item over the old line
 print () {
-	tput clear 
-	tput cup $((size/3)) 1
-
-	[[ ${save[index]} ]] && color=$(tput setaf 6) || color="$(tput setaf 9)"
-	printf "%s%d/%d %s%s%s" "$(tput setaf 1)" $((index+1)) $max "$color" "${lines[index]}" "$(tput setaf 9)"
-	tput hpa vpa
+	cur_reset
+	[[ ${save[index]} ]] && color="$_cyan" || color="$_def"
+	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def"
+	(( ${#save[@]} )) && printf "%d saved items" ${#save[@]}
 }
 
 reset_screen () {
-	tput civis # Make cursor invisible
-	size=$(tput lines)
-	tput setaf 9
+	init
 	print
 }
 
@@ -42,7 +52,7 @@ lines=()
 save=()
 # The tweets to serve up
 while read -r l ; do [[ $l ]] && lines+=("$l") ; done < "$file"
-lines+=("$(tput setaf 1)No more items$(tput setaf 9)")
+lines+=("${_red}No more items$_def")
 
 index=0
 max="${#lines[@]}"
@@ -70,12 +80,12 @@ while read -sN1 ; do
 			;;
 		q | ) # Quit, printing saved items
 			printf "\n\n"
-			if (( ${#save} )) ; then 
+			if (( ${#save[@]} )) ; then 
 				# Put together the saved entries
 				out=()
 				for i in "${!save[@]}" ; do out+=( "${lines[i]}" ) ; done
 				# Write out saved entires to STDOUT or $file
-				read -n1 -p "Write out saved entries to file $file? [y/N] "
+				read -n1 -p "Write out ${#save[@]} saved entries to file $file? [y/N] "
 				printf "\n"
 				[[ $REPLY = [yY] ]] && printf "%s\n" "${out[@]}" > "$file" || printf "%s\n" "${out[@]}"
 			else
@@ -85,15 +95,15 @@ while read -sN1 ; do
 			fi
 
 			tput cnorm # Make cursor visible again
+			TMOUT="$tmout"
 			exit
 			;;
 		u ) # Move a URL to clip
 			for word in ${lines[index]} ; do # Yay! Intentional word splitting
 				! [[ $word = http* || $word = www* ]] && continue
 				xclip -i <<< "$word"
-				tput clear 
-				tput cup $((size/3)) 1
-				printf "URL %s%s%s -> press any key to continue" "$(tput setaf 4)" "$word" "$(tput setaf 9)"
+				cur_reset
+				printf "URL %s%s%s -> press any key to continue" "$_blue" "$word" "$_def"
 				read -N1
 			done
 			print
