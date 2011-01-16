@@ -20,6 +20,8 @@
 #
 
 file="${1:-/tmp/t}"
+tmout="$TMOUT"
+unset TMOUT
 
 _size=$(tput lines)
 _red=$(tput setaf 1)
@@ -93,6 +95,7 @@ while read -sN1 ; do
 			fi
 
 			tput cnorm # Make cursor visible again
+			TMOUT="$tmout"
 			exit
 			;;
 		u ) # Move a URL to clip
