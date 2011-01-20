@@ -29,7 +29,7 @@ sub said
 		print $FH join("\t", lc($args->{'who'}), $for, join(" ", @words)) . "\n";
 		close $FH;
 
-		$self->bot()->notice($args->{'who'}, "Quote added for $for");
+		$self->tell($args->{'who'}, "Quote added for $for");
 	}
 
 

@@ -21,6 +21,7 @@ sub said
 
 
 	my @words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'smilie');
+	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'get') unless(scalar(@words) > 1 and $words[0]);
 	if (scalar(@words) > 0 and $words[0])
 	{
 		if (scalar(@words) == 1 and $self->bot()->{'factoids'}->{$words[0]})
