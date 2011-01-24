@@ -18,7 +18,7 @@ sub said
 
 	# Stop here on IGNOREUSER
 	return if ( $::config{'titler_IGNOREUSER'} and grep { lc($_) eq lc($args->{'who'}) } @{ $::config{'titler_IGNOREUSER'} } );
-
+	my $chan = lc($args->{'channel'});
 
 	my @words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'quoteadd');
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'addquote') unless(scalar(@words) > 1 and $words[0]);
@@ -30,6 +30,7 @@ sub said
 		close $FH;
 
 		$self->tell($args->{'who'}, "Quote added for $for");
+		return;
 	}
 
 
@@ -37,7 +38,7 @@ sub said
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'quotecount');
 	if (scalar(@words) > 0 and $words[0])
 	{
-		return unless (grep {lc($args->{'channel'}) eq lc($_)} @{$::config{'quote_CHANS'}});
+		return unless (grep {$chan eq lc($_)} @{$::config{'quote_CHANS'}});
 		$for = lc(shift(@words));
 		$showQuote = 2;
 	}
@@ -45,7 +46,7 @@ sub said
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'quote');
 	if (scalar(@words) > 0 and $words[0])
 	{
-		return unless (grep {lc($args->{'channel'}) eq lc($_)} @{$::config{'quote_CHANS'}});
+		return unless (grep {$chan eq lc($_)} @{$::config{'quote_CHANS'}});
 		$for = lc(shift(@words));
 		$showQuote = 1;
 		$number = shift(@words);
@@ -53,9 +54,28 @@ sub said
 	}
 	elsif ($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'quote'))
 	{
-		return unless (grep {lc($args->{'channel'}) eq lc($_)} @{$::config{'quote_CHANS'}});
+		return unless (grep {$chan eq lc($_)} @{$::config{'quote_CHANS'}});
 		$for = undef;
 		$showQuote = 1;
+	}
+
+	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'grab');
+	if (scalar(@words) > 0 and $words[0])
+	{
+		my $for = lc(shift(@words));
+		if ($self->{lastSaid}->{$chan}->{$for})
+		{
+			open my $FH, ">>", $::config{'quote_FILE'} or die;
+			print $FH join("\t", lc($args->{'who'}), $for, $self->{lastSaid}->{$chan}->{$for}) . "\n";
+			close $FH;
+
+			$self->tell($args->{'who'}, "Quote added for $for: " . $self->{lastSaid}->{$chan}->{$for});
+		}
+		else
+		{
+			$self->tell($args->{'who'}, "Nothing found for $for");
+		}
+		return;
 	}
 
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'quotedump');
@@ -108,10 +128,27 @@ sub said
 			$reply = "No quotes on file for that person.";
 		}
 
-		$self->tell($args->{'channel'}, $reply) if ($reply);
+		$self->tell($chan, $reply) if ($reply);
+	}
+	else
+	{
+		$self->{lastSaid}->{$chan} = {} unless (defined $self->{lastSaid}->{$chan});
+		$self->{lastSaid}->{$chan}->{lc($args->{'who'})} = sprintf("<%s> %s", $args->{'who'}, $args->{'body'});
 	}
 
 
+	return;
+}
+
+sub emoted
+{
+	my ($self, $args, $pri) = @_;
+	return unless( $args->{'body'} );
+	return unless ($pri == 2);
+	my $chan = lc($args->{channel});
+
+	$self->{lastSaid}->{$chan} = {} unless (defined $self->{lastSaid}->{$chan});
+	$self->{lastSaid}->{$chan}->{lc($args->{'who'})} = "* " . $args->{'body'};
 	return;
 }
 
@@ -119,6 +156,7 @@ sub init
 {
 	my ($self) = @_;
 	$self->Bot::BasicBot::Pluggable::Module::Utils::configKeyLoader(quote_FILE => "./quotes.txt");
+	$self->{lastSaid} = {};
 }
 
 1;

@@ -39,6 +39,7 @@ my $bot = Bot::BasicBot::Pluggable->new(
 	nick      => $config{'NICK'}    || die,
 	alt_nicks => $config{'ANICK'}   || undef,
 	username  => $config{'NAME'}    || die,
+	name      => $config{'RNAME'}   || $config{'NICK'} . " bot",
 	port      => $config{'PORT'}    || die,
 );
 

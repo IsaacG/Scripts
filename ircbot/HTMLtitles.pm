@@ -66,6 +66,7 @@ sub said
 		else
 		{
 			$message = "Title: " . $response->title();
+			$message = substr($message, 0, 447) . "..." if (length($message) > 450);
 		}
 
 		$message = "$message (at " . $response->request->uri()->host() . ")";

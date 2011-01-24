@@ -24,13 +24,13 @@ sub said
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'get') unless(scalar(@words) > 1 and $words[0]);
 	if (scalar(@words) > 0 and $words[0])
 	{
-		if (scalar(@words) == 1 and $self->bot()->{'factoids'}->{$words[0]})
+		if (scalar(@words) == 1 and $self->bot()->{'factoids'}->{lc($words[0])})
 		{
-			$self->reply($args, sprintf "%s -> %s", $words[0], $self->bot()->{'factoids'}->{$words[0]});
+			$self->reply($args, $self->bot()->{'factoids'}->{lc($words[0])});
 		}
 		else
 		{
-			$self->reply($args, $words[0] . " not defined");
+			$self->tell($args->{'who'}, $words[0] . " not defined");
 		}
 		return;
 	}
@@ -46,7 +46,7 @@ sub said
 			$self->reply($args, "To add a smilie do: ?define $word [definition]");
 			return;
 		}
-		$self->bot()->{'factoids'}->{$word} = $def;
+		$self->bot()->{'factoids'}->{lc($word)} = $def;
 		open my $fh, ">>", $::config{'factoid_FILE'} or die;
 		printf $fh "%s\t%s\t%s\t%s\n", time, $args->{'who'}, $word, $def;
 		close $fh;
@@ -74,7 +74,8 @@ sub loadFactoids
 	{
 		my ($time, $nick, $word, $def) = split(/\t/, $line, 4);
 		next unless ($word and $def);
-		$hash->{$word} = $def;
+		$def = substr($def, 0, 447) . "..." if (length($def) > 450);
+		$hash->{lc($word)} = $def;
 	}
 }
 
