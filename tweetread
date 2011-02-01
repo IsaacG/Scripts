@@ -26,6 +26,7 @@ unset TMOUT
 _size=$(tput lines)
 _red=$(tput setaf 1)
 _blue=$(tput setaf 4)
+_magenta=$(tput setaf 5)
 _cyan=$(tput setaf 6)
 _def=$(tput setaf 9)
 
@@ -40,6 +41,15 @@ print () {
 	cur_reset
 	[[ ${save[index]} ]] && color="$_cyan" || color="$_def"
 	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def"
+	
+	# If there is a URL, xclip it
+	for word in ${lines[index]} ; do 
+		! [[ $word = http* || $word = www* ]] && continue
+		xclip -i <<< "$word"
+		printf "%s URL copied: %s%s\n" "$_magenta" "$word" "$_def"
+		break
+	done
+
 	(( ${#save[@]} )) && printf "%d saved items" ${#save[@]}
 }
 
@@ -73,6 +83,7 @@ while read -sN1 ; do
 			;;
 		s) # Toggle save an item. Displayed on quit
 			[[ ${save[index]} ]] && unset save[index] || save[index]=1
+			((index < max - 1 && index++)) # Advance to next item on save
 			print
 			;;
 		l) # Reset/refresh screen
