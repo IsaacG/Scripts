@@ -24,7 +24,7 @@ sub said
 	
 	for my $i (0..scalar(@words)-1)
 	{
-		$self->bot()->notice($args->{'who'}, $results[$i] eq "*" ? "$words[$i]: Good" : "$words[$i]: $results[$i]");
+		$self->tell($args->{'who'}, $results[$i] eq "*" ? "$words[$i]: Good" : "$words[$i]: $results[$i]");
 	}
 
 	return;

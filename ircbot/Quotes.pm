@@ -114,12 +114,11 @@ sub said
 				$reply = sprintf("%s has %d quotes on file.", $for, scalar(@options)); 
 			} elsif ($showQuote == 3) # Dump quotes to PM
 			{
-				$reply = undef;
-				$self->tell($args->{'who'}, "All quotes for $for");
+				$self->tell($args->{'who'}, $#options + 1 . " quotes for $for");
 				my $i = 0;
 				for my $quote (@options)
 				{
-					$self->tell($args->{'who'}, sprintf("%d: %s", $i++, $quote));
+					push @{$self->{queue}}, {a => $args->{'who'}, b => sprintf("%d: %s", $i++, $quote)};
 				}
 			}
 		}
@@ -140,6 +139,19 @@ sub said
 	return;
 }
 
+sub tick
+{
+	my $self = shift;
+
+	for (1..3)
+	{
+		my $item = shift @{$self->{queue}};
+		return 1 unless ($item);
+		$self->tell($item->{a}, $item->{b});
+	}
+	return 1;
+}
+
 sub emoted
 {
 	my ($self, $args, $pri) = @_;
@@ -157,6 +169,7 @@ sub init
 	my ($self) = @_;
 	$self->Bot::BasicBot::Pluggable::Module::Utils::configKeyLoader(quote_FILE => "./quotes.txt");
 	$self->{lastSaid} = {};
+	$self->{queue} = [];
 }
 
 1;
