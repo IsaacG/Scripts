@@ -3,6 +3,7 @@ package Bot::BasicBot::Pluggable::Module::Quotes;
 use warnings;
 use strict;
 
+use WWW::Pastebin::PastebinCom::Create;
 use Bot::BasicBot::Pluggable::Module; 
 use Bot::BasicBot::Pluggable::Module::Utils; 
 use base qw(Bot::BasicBot::Pluggable::Module);
@@ -114,12 +115,19 @@ sub said
 				$reply = sprintf("%s has %d quotes on file.", $for, scalar(@options)); 
 			} elsif ($showQuote == 3) # Dump quotes to PM
 			{
-				$self->tell($args->{'who'}, $#options + 1 . " quotes for $for");
+				my $paster = WWW::Pastebin::PastebinCom::Create->new(timeout => 10);
+				#$self->tell("yitz", "Object made");
 				my $i = 0;
-				for my $quote (@options)
-				{
-					push @{$self->{queue}}, {a => $args->{'who'}, b => sprintf("%d: %s", $i++, $quote)};
-				}
+				$paster->paste(
+					text => join("\n", $#options + 1 . " quotes for $for", map {my (undef, $q) = split(/\t/, $_, 2); $i++ . ": " . $q} @options), 
+					poster => "PlugBot", 
+					expiry => "d", # One day
+					subdomain => "quotedump",
+					desc => $#options + 1 . " quotes for $for"
+				) or return "Pastie fail";
+				#$self->tell("yitz", "Paste uploaded");
+				$self->reply($args, $#options + 1 .  " quotes for $for: " . $paster->paste_uri());
+				#$self->tell("yitz", "Done");
 			}
 		}
 		else
