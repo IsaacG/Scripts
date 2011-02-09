@@ -3,6 +3,7 @@ package Bot::BasicBot::Pluggable::Module::Quotes;
 use warnings;
 use strict;
 
+use WWW::Pastebin::PastebinCom::Create;
 use Bot::BasicBot::Pluggable::Module; 
 use Bot::BasicBot::Pluggable::Module::Utils; 
 use base qw(Bot::BasicBot::Pluggable::Module);
@@ -114,13 +115,19 @@ sub said
 				$reply = sprintf("%s has %d quotes on file.", $for, scalar(@options)); 
 			} elsif ($showQuote == 3) # Dump quotes to PM
 			{
-				$reply = undef;
-				$self->tell($args->{'who'}, "All quotes for $for");
+				my $paster = WWW::Pastebin::PastebinCom::Create->new(timeout => 10);
+				#$self->tell("yitz", "Object made");
 				my $i = 0;
-				for my $quote (@options)
-				{
-					$self->tell($args->{'who'}, sprintf("%d: %s", $i++, $quote));
-				}
+				$paster->paste(
+					text => join("\n", $#options + 1 . " quotes for $for", map {my (undef, $q) = split(/\t/, $_, 2); $i++ . ": " . $q} @options), 
+					poster => "PlugBot", 
+					expiry => "d", # One day
+					subdomain => "quotedump",
+					desc => $#options + 1 . " quotes for $for"
+				) or return "Pastie fail";
+				#$self->tell("yitz", "Paste uploaded");
+				$self->reply($args, $#options + 1 .  " quotes for $for: " . $paster->paste_uri());
+				#$self->tell("yitz", "Done");
 			}
 		}
 		else
@@ -140,6 +147,19 @@ sub said
 	return;
 }
 
+sub tick
+{
+	my $self = shift;
+
+	for (1..3)
+	{
+		my $item = shift @{$self->{queue}};
+		return 1 unless ($item);
+		$self->tell($item->{a}, $item->{b});
+	}
+	return 1;
+}
+
 sub emoted
 {
 	my ($self, $args, $pri) = @_;
@@ -157,6 +177,7 @@ sub init
 	my ($self) = @_;
 	$self->Bot::BasicBot::Pluggable::Module::Utils::configKeyLoader(quote_FILE => "./quotes.txt");
 	$self->{lastSaid} = {};
+	$self->{queue} = [];
 }
 
 1;
