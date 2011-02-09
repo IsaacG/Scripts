@@ -19,6 +19,9 @@
 # Should have more robust handling around input file. And output... Save to input file with confirmation?
 #
 
+# On TERM, make cursor visible
+trap 'tput cnorm' EXIT
+
 file="${1:-/tmp/t}"
 tmout="$TMOUT"
 unset TMOUT
