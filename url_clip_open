@@ -1,0 +1,12 @@
+#!/bin/bash
+
+{
+	last=$(xclip -o)
+
+	while sleep 0.75 ; do
+		clip=$(xclip -o)
+		[[ $last = $clip ]] && continue
+		[[ $clip = www* ]] || [[ $clip = http* ]] && firefox "$clip"
+		last="$clip"
+	done
+}
