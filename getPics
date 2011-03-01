@@ -1,0 +1,120 @@
+#!/bin/bash
+
+shopt -s nullglob
+shopt -s nocaseglob
+
+[[ -f "$HOME/config/getPics" ]] && . "$HOME/config/getPics"
+
+declare -A destinations
+
+die ()
+{
+	echo "$@"
+	exit 1
+}
+
+
+checkPrograms ()
+{
+	type exiv2 >/dev/null || die "Can not find 'exiv2'"
+	type file  >/dev/null || die "Can not find 'file'"
+}
+
+checkArgs ()
+{
+	from="${1:-$from}"
+	to="${2:-$to}"
+	to="${to%/}"
+	num="${from##*/10}"
+	num="${num%NCD40}"
+
+	[[ -d $from ]] || die "$from not a dir"
+	[[ -d $to ]]   || die "$to not a dir"
+	[[ $num ]]     || die "No num extracted from $from"
+
+	read -p "Moving from $from to $to, applying number $num. Ctrl-C now to quit." -n1 -t5
+}
+
+pictaken () 
+{
+	exiv2 "$1" | sed -n '/Image timestamp/ {s/Image timestamp : //; s/ .*//; s/^....://; s/://; p}'
+}
+
+
+processFolder ()
+{
+	for item ; do
+		#echo "Processing $item"
+		if [[ -d $item ]] ; then
+			item="${item%/}"
+			die "I do not expect a directory here - $item"
+		elif [[ -f $item ]] ; then
+			fnam="${item##*/}"
+
+			# Check file type
+			mime=$(file -bi "$item")
+			[[ $mime = image/jpeg* ]] || { echo "$item is not a jpeg image" ; continue ; }
+
+			# Get image date
+			pt="$(pictaken "$item")"
+			[[ $pt ]] || { echo "Failed to get date for $item" ; continue ; }
+			pt="${to}/${pt}"
+			destinations["$pt"]=1
+
+			[[ ! -d $pt ]] && { mkdir "$pt" || die "Failed to create directory $pt" ; }
+			[[ -e $pt/$fnam ]] && { echo "$fnam already exists in $pt" ; continue ; }
+
+			mv -n "$item" "$pt/${fnam/_/_$num}" 2>/dev/null || { 
+				echo "Failed to mv $item to $pt" ; continue ; 
+			}
+		fi
+	done
+}
+
+initDestinations ()
+{
+	#printf "Dirs to process: " ; printf "%s, " "$@" ; printf "\n";
+	#return
+	for dir ; do
+		mkdir "$dir/bu"
+		mv "$dir/"*.{JPG,JPEG} "$dir/bu"
+
+		read -n 1 -p "Make selection dir with symlinks for $dir? [y/N] "
+		printf "\n"
+		if [[ $REPLY = [yY] ]] ; then
+			mkdir "$dir/selection" || die "Failed to make dir"
+			( cd "$dir/bu" ; for i in * ; do ln "$i" ../selection ; done ; )
+		fi
+
+		read -n 1 -p "Make a small dir for $dir? [y/N] "
+		printf "\n"
+		if [[ $REPLY = [yY] ]] ; then
+			mkdir "$dir/small" || die "Failed to make dir"
+			read -n 1 -p "Make selection-small dir with symlinks for $dir? [y/N] "
+			printf "\n"
+			if [[ $REPLY = [yY] ]] ; then
+				mkdir "$dir/selection-small" || die "Failed to make dir"
+			fi
+			(
+				cd "$dir/bu"
+				all=(*)
+				for i in * ; do 
+					convert -resize 35%x35% "$i" ../small/"$i" 
+					printf "\r%d%%" $(( 100 * ++c / ${#all[@]} ))
+				done 
+				printf "\n"
+			)
+			if [[ -d "$dir/selection-small" ]] ; then
+				( cd "$dir/small" ; for i in * ; do ln "$i" ../selection-small ; done ; )
+			fi
+
+		fi
+
+	done
+}
+
+
+checkPrograms
+checkArgs "$@"
+processFolder "$from/"*
+initDestinations "${!destinations[@]}"
