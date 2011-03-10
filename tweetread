@@ -45,13 +45,16 @@ print () {
 	[[ ${save[index]} ]] && color="$_cyan" || color="$_def"
 	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def"
 	
-	# If there is a URL, xclip it
+	# Find all URLs and xclip them
+	urls=""
 	for word in ${lines[index]} ; do 
 		! [[ $word = http* || $word = www* ]] && continue
-		xclip -i <<< "$word"
-		printf "%s URL copied: %s%s\n" "$_magenta" "$word" "$_def"
-		break
+		[[ $urls ]] && urls="$urls|$word" || urls="$word"
 	done
+	[[ $urls ]] && { 
+		xclip -i <<< "$urls"
+		printf "%s URL copied: %s%s\n" "$_magenta" "$urls" "$_def"
+	}
 
 	(( ${#save[@]} )) && printf "%d saved items" ${#save[@]}
 }
