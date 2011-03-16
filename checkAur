@@ -1,0 +1,26 @@
+#!/bin/bash
+
+[[ -d /tmp/aur_build ]] || mkdir /tmp/aur_build
+cd /tmp/aur_build || exit
+
+{ 
+sudo pacman -Qm | \
+while read pkg ver ; do
+	cur=$( 
+		{ 
+			wget -qO - "http://aur.archlinux.org/packages/$pkg/PKGBUILD" ; 
+			printf "\n%s\n" 'printf "%s-%s\n" "$pkgver" "$pkgrel"' ; 
+		} | bash 
+	) || continue
+	[[ $cur = "-" ]] && continue
+	newer=$(vercmp "$cur" "$ver")
+	(( newer > 0 )) || continue
+
+	printf "%s: Have %s and AUR has %s\n" "$pkg" "$ver" "$cur"
+	#read -p "Upgrade? [y/N] " -n 1 <&3
+	#[[ $REPLY = [yY] ]] || continue
+	[[ -d /tmp/aur_build/$pkg ]] && { rm -rf "/tmp/aur_build/$pkg" || continue ; }
+	wget -qO - "http://aur.archlinux.org/packages/$pkg/$pkg.tar.gz" | tar xz || continue
+	# ( cd "/tmp/aur_build/$pkg" || continue makepkg -i ; )
+done 
+} 3<&1
