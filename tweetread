@@ -22,7 +22,7 @@
 # On TERM, make cursor visible
 trap 'tput cnorm' EXIT
 
-file="${1:-/tmp/t}"
+file="${1:-./twitter}"
 tmout="$TMOUT"
 unset TMOUT
 
@@ -63,6 +63,11 @@ reset_screen () {
 	init
 	print
 }
+
+if ! [[ -r $file ]] ; then
+	echo "File $file not readable."
+	exit 1
+fi
 
 lines=()
 save=()
