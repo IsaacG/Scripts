@@ -10,6 +10,10 @@ waitforfile () {
         until [[ -f $file ]] ; do sleep "$delay" ; done
         return 0
 }
+# Wait for the file then remove it
+waitonceforfile () {
+	waitforfile "$@" && rm "$1"
+}
 
 alias c=clear
 alias ls='ls --color=auto'

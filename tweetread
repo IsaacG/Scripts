@@ -92,6 +92,11 @@ while read -sN1 ; do
 			((index > 0 && index--))
 			print
 			;;
+		[of]) # Open with ff
+			firefox "$urls"
+			((index < max - 1 && index++)) # Advance to next item on save
+			print
+			;;
 		s) # Toggle save an item. Displayed on quit
 			[[ ${save[index]} ]] && unset save[index] || save[index]=1
 			((index < max - 1 && index++)) # Advance to next item on save
