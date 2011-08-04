@@ -81,7 +81,7 @@ max="${#lines[@]}"
 # Starting point and first item
 reset_screen
 
-shopt -s nocasematch
+#shopt -s nocasematch
 while read -sN1 ; do
 	case "$REPLY" in
 		"" | [nj] | " " ) # Next
@@ -100,6 +100,10 @@ while read -sN1 ; do
 		s) # Toggle save an item. Displayed on quit
 			[[ ${save[index]} ]] && unset save[index] || save[index]=1
 			((index < max - 1 && index++)) # Advance to next item on save
+			print
+			;;
+		S) # Set everything as saved
+			for ((i=0; i<= max; i++)) ; do save[i]=1 ; done
 			print
 			;;
 		l) # Reset/refresh screen
