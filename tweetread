@@ -106,6 +106,10 @@ while read -sN1 ; do
 			for ((i=0; i<= max; i++)) ; do save[i]=1 ; done
 			print
 			;;
+		A) # Set everything as saved - from here to the end
+			for ((i=index; i<= max; i++)) ; do save[i]=1 ; done
+			print
+			;;
 		l) # Reset/refresh screen
 			reset_screen
 			;;
