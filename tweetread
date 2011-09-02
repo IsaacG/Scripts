@@ -23,6 +23,7 @@
 trap 'tput cnorm' EXIT
 
 file="${1:-./twitter}"
+offset="${2:- 0}"
 tmout="$TMOUT"
 unset TMOUT
 
@@ -75,7 +76,7 @@ save=()
 while read -r l ; do [[ $l ]] && lines+=("$l") ; done < "$file"
 lines+=("${_red}No more items$_def")
 
-index=0
+index="$offset"
 max="${#lines[@]}"
 
 # Starting point and first item
@@ -103,11 +104,16 @@ while read -sN1 ; do
 			print
 			;;
 		S) # Set everything as saved
-			for ((i=0; i<= max; i++)) ; do save[i]=1 ; done
+			for ((i = 0; i < max; i++)) ; do save[i]=1 ; done
 			print
 			;;
 		A) # Set everything as saved - from here to the end
-			for ((i=index; i<= max; i++)) ; do save[i]=1 ; done
+			for ((i = index; i < max; i++)) ; do save[i]=1 ; done
+			print
+			;;
+		d) # Skip down to next divider line. Look for "===========". Save as we go
+			for ((i = index; i < max; i++)) ; do save[i]=1 ; [[ ${lines[i]} = *'=========='* ]] && break ; done
+			index=$((i + 1))
 			print
 			;;
 		l) # Reset/refresh screen
