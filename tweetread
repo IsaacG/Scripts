@@ -40,6 +40,8 @@ cur_reset () { printf "%s" "$_cur_reset" ;}
 _init="$(tput civis; tput setaf 9)" # Make cursor invisible, reset color
 init () { printf "%s" "$_init" ;}
 
+type xclip &>/dev/null && has_xclip=1 || has_xclip=0
+
 # Print a new feed item over the old line
 print () {
 	cur_reset
@@ -53,7 +55,7 @@ print () {
 		[[ $urls ]] && urls="$urls|$word" || urls="$word"
 	done
 	[[ $urls ]] && { 
-		xclip -i <<< "$urls"
+		((has_xclip)) && xclip -i <<< "$urls"
 		printf "%s URL copied: %s%s\n" "$_magenta" "$urls" "$_def"
 	}
 
@@ -142,7 +144,7 @@ while read -sN1 ; do
 		u ) # Move a URL to clip
 			for word in ${lines[index]} ; do # Yay! Intentional word splitting
 				! [[ $word = http* || $word = www* ]] && continue
-				xclip -i <<< "$word"
+				((has_xclip)) && xclip -i <<< "$word"
 				cur_reset
 				printf "URL %s%s%s -> press any key to continue" "$_blue" "$word" "$_def"
 				read -N1
