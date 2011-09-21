@@ -44,7 +44,7 @@ sub said
 
 		if ($nextAllowed > time)
 		{
-			$self->bot()->notice($args->{'who'}, sprintf("Sorry. Stats were done too recently. Try in %d seconds.", ($nextAllowed - time)));
+			$self->tell($args->{'who'}, sprintf("Sorry. Stats were done too recently. Try in %d seconds.", ($nextAllowed - time)));
 		}
 		else
 		{
