@@ -93,7 +93,7 @@ sub wzLookup
 				push(
 					@output, 
 					sprintf(
-						" Conditions: %d°C/%.1f°F | WC: %d°C/%.1f°F | %s | Humidity: %d%%", 
+						" Conditions: %dC/%.1fF | WC: %dC/%.1fF | %s | Humidity: %d%%", 
 						$location->current_conditions()->temperature(),
 						($location->current_conditions()->temperature() * 1.8 + 32),
 						$location->current_conditions()->windchill(),
@@ -108,7 +108,7 @@ sub wzLookup
 				push(
 					@output, 
 					sprintf(
-						" Conditions: %d°C/%.1f°F | %s | Humidity: %d%%", 
+						" Conditions: %dC/%.1fF | %s | Humidity: %d%%", 
 						$location->current_conditions()->temperature(),
 						($location->current_conditions()->temperature() * 1.8 + 32),
 						$location->current_conditions()->description(),

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+true && for (( j = 0; j < 100; j = j + 50 )) ; do
+	curl "http://bobbyatto.tumblr.com/api/read?start=$j&num=50" > t
+
+	num=$(xmllint --xpath 'count(//tumblr/posts/post/photo-url)' t)
+	for ((i=1;i<=num;i++)) ; do
+		xmllint --xpath "(//tumblr/posts/post/photo-url)[$i]/text()" t
+		printf '\n'
+	done 
+done > all_urls
+
+{
+	while read line ; do
+
+		declare -A size
+		declare -A url
+
+		x=${line##*/}
+		x=${x#tumblr_}
+		y="a" ; z=0
+
+		[[ $x = *75sq.??? ]] && continue
+
+		if [[ $x = *1_???.??? ]] ; then
+			z="${x##*1_}" ; z="${z%.???}"
+			y="${x%?1_???.???}"
+		else
+			z=10000
+			y=$x
+		fi
+		false && printf "%s %s %s %s\n" "$x" "$y" "$z" "$line"
+		[[ -z ${size[$y]} ]] && size[$y]=0
+		if (( ${size[$y]} < z )) ; then
+			size[$y]=$z
+			url[$y]=$line
+		fi
+
+	done < all_urls
+	printf "%s\n" "${url[@]}"
+} > urls
+wget -i urls -nc --wait=1

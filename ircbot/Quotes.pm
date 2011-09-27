@@ -63,6 +63,12 @@ sub said
 	@words = $self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'grab');
 	if (scalar(@words) > 0 and $words[0])
 	{
+		if ($chan eq '#aberrant')
+		{
+			$self->tell($chan, "No grabbing in this channel.");
+			return
+		}
+
 		my $for = lc(shift(@words));
 		if ($self->{lastSaid}->{$chan}->{$for})
 		{

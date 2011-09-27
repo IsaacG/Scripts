@@ -42,7 +42,7 @@ sub said
 
 	unless ($when =~ /^\d+[smhd]?$/)
 	{
-		$self->bot()->notice($args->{'who'}, "Invalid time stamp used: $when");
+		$self->tell($args->{'who'}, "Invalid time stamp used: $when");
 		return;
 	}
 
@@ -56,7 +56,7 @@ sub said
 		}
 		else
 		{
-			$self->bot()->notice($args->{'who'}, "Nothing to snooze!");
+			$self->tell($args->{'who'}, "Nothing to snooze!");
 			return;
 		}
 	}
@@ -68,7 +68,7 @@ sub said
 	push @{$self->{'reminders'}}, { when => time + $delay, who => $rwho, what => $what };
 	$self->saveReminders();
 
-	$self->bot()->notice($args->{'who'}, "Reminder set");
+	$self->tell($args->{'who'}, "Reminder set");
 
 	return;
 }
