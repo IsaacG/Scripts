@@ -47,14 +47,14 @@ print () {
 	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def"
 	
 	# Find all URLs and xclip them
-	urls=""
+	urls=()
 	for word in ${lines[index]} ; do 
 		! [[ $word = http* || $word = www* ]] && continue
-		[[ $urls ]] && urls="$urls|$word" || urls="$word"
+		urls+=("$word")
 	done
 	[[ $urls ]] && { 
-		xclip -i <<< "$urls"
-		printf "%s URL copied: %s%s\n" "$_magenta" "$urls" "$_def"
+		xclip -i <<< "${urls[@]}"
+		for i in "${urls[@]}" ; do printf "%s URL copied: %s%s\n" "$_magenta" "$i" "$_def" ; done
 	}
 
 	(( ${#save[@]} )) && printf "%d saved items" ${#save[@]}
@@ -94,7 +94,7 @@ while read -sN1 ; do
 			print
 			;;
 		[of]) # Open with ff
-			firefox "$urls"
+			for i in "${urls[@]}" ; do firefox "$i" ; done
 			((index < max - 1 && index++)) # Advance to next item on save
 			print
 			;;

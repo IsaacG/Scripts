@@ -3,7 +3,7 @@
 c="${1:- 0}"
 
 urls=$(
-	grep 'http.*tumblr' /mnt/sda1/urls.txt \
+	grep 'http.*tumblr' /mnt/sda1/tumblr.urls \
 	| sed 's/ .*//' | sed "s/^/'/;s/\$/'/" \
 	| tr '\n' ',' | sed 's/,$//'
 )
@@ -15,6 +15,7 @@ urls=$(
 		titles+=("$title")
 	done
 
+	unset TMOUT
 	pause=20
 	for ((; c < ${#urls[@]}; c++)) ; do
 		i="${urls[c]}"
@@ -41,4 +42,4 @@ urls=$(
 		firefox -new-tab "$i"
 	done
 } 3< <( printf ".separator ' |'\nSELECT i.url,f.title,i.title FROM rss_item AS i JOIN rss_feed AS f ON i.feedurl = f.rssurl WHERE unread = 1 AND deleted = 0 AND feedurl IN (%s) ORDER BY   pubDate ASC;" "$urls" \
-| sqlite3 /mnt/sda1/newsbeuter.cache.db )
+| sqlite3 /mnt/sda1/tumblr.cache.db )
