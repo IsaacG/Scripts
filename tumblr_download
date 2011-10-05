@@ -1,7 +1,12 @@
 #!/bin/bash
 
 true && for (( j = 0; j < 100; j = j + 50 )) ; do
-	curl "http://bobbyatto.tumblr.com/api/read?start=$j&num=50" > t
+	while curl "http://bobbyatto.tumblr.com/api/read?start=$j&num=50" > t && \
+			fgrep -q 'Our servers are over capacity' t 
+	do
+		echo "Tumblr overload; try later" >&2
+		sleep 60
+	done
 
 	num=$(xmllint --xpath 'count(//tumblr/posts/post/photo-url)' t)
 	for ((i=1;i<=num;i++)) ; do
