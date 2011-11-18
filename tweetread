@@ -55,7 +55,8 @@ print () {
 		urls+=("$word")
 	done
 	[[ $urls ]] && { 
-		((has_xclip)) && xclip -i <<< "${urls[@]}"
+		((has_xclip)) && xclip -i -selection clipboard <<< "${urls[@]}"
+		((has_xclip)) && xclip -i -selection primary <<< "${urls[@]}"
 		for i in "${urls[@]}" ; do printf "%s URL copied: %s%s\n" "$_magenta" "$i" "$_def" ; done
 	}
 
@@ -128,12 +129,20 @@ while read -sN1 ; do
 				out=()
 				for i in "${!save[@]}" ; do out+=( "${lines[i]}" ) ; done
 				# Write out saved entires to STDOUT or $file
-				read -n1 -p "Write out ${#save[@]} saved entries to file $file? [y/N] "
+				read -n1 -p "Write out ${#save[@]} saved entries to file $file? [y/n] "
 				printf "\n"
+				if ! [[ $REPLY = [yYnN] ]] ; then
+					print
+					continue
+				fi
 				[[ $REPLY = [yY] ]] && printf "%s\n" "${out[@]}" > "$file" || printf "%s\n" "${out[@]}"
 			else
-				read -n1 -p "Clear file $file? [y/N] "
+				read -n1 -p "Clear file $file? [y/n] "
 				printf "\n"
+				if ! [[ $REPLY = [yYnN] ]] ; then
+					print
+					continue
+				fi
 				[[ $REPLY = [yY] ]] && : > "$file"
 			fi
 
@@ -144,7 +153,8 @@ while read -sN1 ; do
 		u ) # Move a URL to clip
 			for word in ${lines[index]} ; do # Yay! Intentional word splitting
 				! [[ $word = http* || $word = www* ]] && continue
-				((has_xclip)) && xclip -i <<< "$word"
+				((has_xclip)) && xclip -i -selection clipboard <<< "$word"
+				((has_xclip)) && xclip -i -selection primary <<< "$word"
 				cur_reset
 				printf "URL %s%s%s -> press any key to continue" "$_blue" "$word" "$_def"
 				read -N1
