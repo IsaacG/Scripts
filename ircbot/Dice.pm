@@ -25,7 +25,7 @@ sub said
 		for my $word (@words) 
 		{
 			$word = lc($word);
-			if ($word =~ /^(\d+)d(\d+)/)
+			if ($word =~ /^(\d+)d(\d+)$/)
 			{
 				my ($num, $type) = ($1, $2);
 				my @rolls;
@@ -35,7 +35,7 @@ sub said
 				push @parts, [ $tmp, sprintf("%d on a %dd%d: <%s>", $tmp, $num, $type, join(", ", @rolls)) ];
 				#$self->tell("Bobby", sprintf("%d on a %dd%d: %s", $tmp, $num, $type, join(", ", @rolls)));
 			}
-			elsif ($word =~ /^d(\d+)/)
+			elsif ($word =~ /^d(\d+)$/)
 			{
 				my $type = $1;
 				my $roll = int(rand($type)) + 1;
@@ -52,7 +52,7 @@ sub said
 				push @parts, [$self->bot()->{'dicestats'}->{$who}->{$word}, uc($word) . " bonus" ];
 				#$self->tell("Bobby", uc($word) . " bonus");
 			}
-			elsif ($word =~ /^\d+$/)
+			elsif ($word =~ /^[+-]?\d+$/)
 			{
 				push @parts, [$word, $word];
 				#$self->tell("Bobby", "+" . $word);
