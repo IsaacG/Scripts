@@ -20,6 +20,7 @@ sub said
 	# setup: !join [initiative bonus] [name]
 	# setup -> combat: !begin
 	# combat: !turn [name]
+	# combat: !me [name] (allow a person to jump into combat when not their turn)
 	# combat: !die [name]
 	# combat -> stopped: !end
 	
@@ -76,6 +77,43 @@ sub said
 		return sprintf("It's not your turn, %s. %s is in middle of their turn.", $who, $turn) unless ($who eq $turn);
 		$self->{'turn'} = ($self->{'turn'} + 1) % $count;
 		return sprintf("%s is done their turn. Now it is your turn, %s.", $who, $self->{'order'}->[$self->{'turn'}]);
+	}
+	elsif ($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'me'))
+	{
+		return "Can't jump into a turn unless a combat is in progress." unless ($state eq 'combat');
+
+		my (undef, $arg) = split(/\s+/, $args->{'body'});
+		$who = $arg if ($arg);
+
+		return sprintf("It's already your turn, %s!", $turn) if ($who eq $turn);
+
+		# Need to move $who to the current "turn" position in the @order array.
+		# If moving backwards, all is good. If moving forwards, $turn--
+		my $pos = $self->{'turn'};
+		my @order = @{$self->{'order'}};
+		return "$who is not in the combat." unless (grep {$who eq $_} @order);
+
+		if (grep {$who eq $_} @order[$pos..$#order]) # If moving back in the order, just reshuffle
+		{
+			@order = grep {$who ne $_} @order;
+			$self->{'order'} = [ @order[0..$pos-1], $who, @order[$pos..$#order] ];
+		}
+		else # Moving forward - need turn-- and reshuffle if moving more than one
+		{
+			$self->{'turn'}--;
+			unless ($order[$self->{'turn'}] eq "$who")
+			{
+				@order = grep {$who ne $_} @order;
+				$self->{'order'} = [ @order[0..$pos-2], $who, @order[$pos-1..$#order] ];
+			}
+		}
+		return "$who jumped into the battle. Your turn, $who. Combat order: " . join(", ", @{$self->{'order'}});
+
+	}
+	elsif ($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'order'))
+	{
+		if ($state eq 'combat') { return "Combat order: " . join(", ", @{$self->{'order'}}); }
+		else { return "There's no order until battle begins."; }
 	}
 	elsif ($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'die'))
 	{
