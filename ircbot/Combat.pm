@@ -107,7 +107,7 @@ sub said
 				$self->{'order'} = [ @order[0..$pos-2], $who, @order[$pos-1..$#order] ];
 			}
 		}
-		return "$who jumped into the battle. Your turn, $who. Combat order: " . join(", ", @{$self->{'order'}});
+		return "$who jumped into the battle. Your turn, $who.";
 
 	}
 	elsif ($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'order'))
