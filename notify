@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Notification script for dwm using dzen2
+
+read -r m <<< "$@"
+#m="${m%% *}"
+echo "$m" | DISPLAY=:0.0 dzen2 -p 8 -xs 1 &
+echo "$m" | DISPLAY=:0.0 dzen2 -p 8 -xs 2 &
+
+#echo "$m" | DISPLAY=:0 ~/bin/osd
+#echo "$m" >> ~/notify.log
