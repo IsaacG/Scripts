@@ -1,7 +1,9 @@
 #!/bin/bash
 
 [[ -d /tmp/aur_build ]] || mkdir /tmp/aur_build
+shopt -s nullglob
 cd /tmp/aur_build || exit
+rm -rf *
 
 { 
 sudo pacman -Qm | \
@@ -21,6 +23,17 @@ while read pkg ver ; do
 	#[[ $REPLY = [yY] ]] || continue
 	[[ -d /tmp/aur_build/$pkg ]] && { rm -rf "/tmp/aur_build/$pkg" || continue ; }
 	wget -qO - "http://aur.archlinux.org/packages/$pkg/$pkg.tar.gz" | tar xz || continue
-	# ( cd "/tmp/aur_build/$pkg" || continue makepkg -i ; )
 done 
 } 3<&1
+pkgs=(/tmp/aur_build/*)
+while (( "${#pkgs[@]}" )) ; do
+	for i in "${pkgs[@]}" ; do
+		read -p "Build $i? [Y/n]"
+		if [[ $REPLY = [nN] ]] ; then
+			rm -r "$i"
+		else
+			( cd "$i" && makepkg -i ; ) && rm -rf "$i"
+		fi
+	done
+	pkgs=( /tmp/aur_build/* )
+done
