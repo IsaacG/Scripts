@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Retrieve a list of man pages from pacman for a package
+manpages () {
+	# Query pacman
+	pacman -Ql "$1" | \
+	grep $'/usr/share/man/.\n/usr/man/.' | \
+	while IFS=' ' read _ file ; do 
+		# Strip the path to a num and man page name
+		file="${file#/usr}"
+		file="${file#/share}"
+		file="${file#/man/man}"
+		num="${file%%/*}" 
+		file="${file#*/}"
+		file="${file%%.*}"
+		[[ $file ]] || continue 
+		echo "$num $file" 
+	done
+}
+
+(( $# == 0 )) && echo "Usage: "$(basename "$0")" package [more_packages...]"
+
+for arg ; do
+	# Get the list of man number and names
+	IFS=$'\n' list=( $(manpages "$arg" 2>&1) )
+
+	# Check if any found
+	if ! [[ "$list" ]] ; then
+		echo "$arg has no man pages."
+		continue
+	fi
+
+	p='error: package * not found'
+	if [[ "${list[0]}" == $p ]] ; then
+		list="${list[0]}"
+		echo "${list#error: }"
+		continue
+	fi
+
+	# Only show prompt for more than one man page
+	prompt=0
+	if (( ${#list[@]} > 1 )) ; then 
+		echo "$arg has ${#list[@]} man pages."
+		prompt=1
+	fi
+
+	for pair in "${list[@]}" ; do
+		IFS=' ' read num name <<< "$pair"
+		if (( prompt )) ; then
+			# If prompting, ask and allow user to selectively skip pages
+			read -p "Show man $pair? [Y/n] " -n 1
+			[[ $REPLY == [nN] ]] && { echo ; continue ; }
+		fi
+		man "$num" "$name"
+	done
+done
