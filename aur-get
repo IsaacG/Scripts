@@ -1,0 +1,63 @@
+#!/bin/bash
+
+. /etc/makepkg.conf
+PKGDEST="${PKGDEST:-./}"
+
+fail () {
+	echo "Fail: $@"
+	exit 1
+}
+
+cd /var/abs/local
+do_wget=1
+if [[ -d $1 ]] ; then
+	read -p "Folder exists. Skip wget (s), Fail (f) or remove folder and reget (r)?" -n 1 ; echo
+	if [[ $REPLY = [sS] ]] ; then
+		do_wget=0
+	elif [[ $REPLY = [rR] ]] ; then
+		rm -r "$1"
+	else
+		exit 1
+	fi
+fi
+
+if (( do_wget )) ; then
+	wget -qO /tmp/aur.tgz "http://aur.archlinux.org/packages/$1/$1.tar.gz" || fail "wget failed."
+fi
+
+tar xzf - < /tmp/aur.tgz && rm /tmp/aur.tgz
+[[ -d $1 ]] || fail "tar did not make my dir."
+
+cd "$1"
+read -p "Edit? (Yes,Skip,QUIT) " -n 1 ; echo
+[[ $REPLY = [yYsS] ]] || exit
+[[ $REPLY = [yY] ]] && vim -p *
+
+
+read -p "Try installing deps?? " -n 1 ; echo
+[[ $REPLY = [yYsSnN] ]] || exit
+[[ $REPLY = [yY] ]] && makepkg -s
+
+read -p "Build? " -n 1 ; echo
+[[ $REPLY = [yYsS] ]] || exit
+[[ $REPLY = [yY] ]] && makepkg -c
+
+pkg=("$PKGDEST/$1"*"$PKGEXT")
+if (( ${#pkg[@]} == 0 )) ; then
+	fail "Could not find built package."
+elif  (( ${#pkg[@]} > 1 )) ; then
+	fail "More than one candidate packages."
+fi
+
+read -p "Install? " -n 1 ; echo
+[[ $REPLY = [yY] ]] || exit
+
+args=()
+read -p "asdep? " -n 1 ; echo
+[[ $REPLY = [yY] ]] && args=(--asdeps)
+sudo pacman -U "${args[@]}" "$pkg"
+
+read -p "pacmanman? " -n 1 ; echo
+[[ $REPLY = [yY] ]] || exit
+$HOME/bin/pacmanman $1
+
