@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Read URLs from a fifo pipe and download them
+# Monitor xclip and add new URLs to said pipe
+
+[[ -p ~/downloadqueue ]] || { echo "Missing fifo" ; exit ; }
+
+cd ~/Downloads/podcasts/ || exit
+
+trap 'kill $pidA $pidB' SIGINT SIGTERM
+
+while : ; do while read -r ; do wget -nc -- "$REPLY" ; done < ~/downloadqueue ; sleep 5; done &
+pidA=$!
+
+cur=$(xclip -o)
+while sleep 0.2 ; do
+	new=$(xclip -o)
+	[[ $cur = $new ]] && continue
+	cur="$new"
+	[[ $cur = http*.mp3 || $cur = http*.m4a ]] && { printf "%s\n" "$cur" > ~/downloadqueue ; printf "%s\n" "$cur" ; }
+done &
+pidB=$!
+
+wait
