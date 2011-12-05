@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# My script to populate the Xroot window with a clock
+
+pgrep barclock | grep -v $$ && exit 1
+while sleep 1 ; do xsetroot -name "$(date +'%a %b %e   %r')" ; done &
