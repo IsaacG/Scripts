@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Config
+
+root=~/"irc"
+channel="#rss-spam"
+server="irc.irchighway.net"
+url_file="./rss2irc.urls"
+
+# Preliminary setup 
+
+die () { echo "$@" ; exit 1 ; }
+
+type rsstail >/dev/null || die "Please install rsstail"
+type ii >/dev/null || die "Please install ii"
+perl -MWWW::Shorten::TinyURL -e 1 2>/dev/null || die "Please install WWW::Shorten::TinyURL"
+
+[[ -d $root ]] || die "Root dir missing: $root"
+[[ -d "$root/$server" ]] || die "Server dir missing: $root/$server. Start ii and connect to server $server."
+[[ -w "$root/$server/in" ]] || die "Server input file not writable. What did you screw up?"
+echo "/j $channel" > "$root/$server/in"
+sleep 5
+[[ -d "$root/$server/$channel" ]] || die "Channel dir missing. Failed to join $channel?"
+[[ -w "$root/$server/$channel/in" ]] || die "Channel input file not writable. What did you screw up?"
+
+[[ -r $url_file ]] || die "URL file $url_file not found."
+
+# Start initialization code
+
+pids=()
+trap 'for i in "${pids[@]}" ; do pkill -P $i cush; pkill -P $i rsstail ; kill $i ; done ;' SIGINT
+
+runtail () {
+	echo "Starting $@"
+	rsstail -Nl -n3 -i120 -u "$1" | \
+	while read title ; do
+		read url
+		turl=$(perl -MWWW::Shorten::TinyURL -e 'print makeashorterlink($ARGV[0])' "$url")
+		printf "%s - %s - %s\n" "$2" "$title" "$turl" > "$root/$server/$channel/in"
+		sleep $3
+	done
+}
+
+# Start run code
+
+mapfile -t urls < "$url_file"
+
+for url in "${urls[@]}" ; do
+	title=$(wget -qO- "$url" | sed -ne '/title/{s/.*>\(.*\)<.*/\1/;p;q}')
+	runtail "$url" "$title" "${#urls[@]}" &
+	pids+=($!)
+	sleep 60
+done
+
+wait
