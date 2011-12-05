@@ -68,7 +68,7 @@ sub said
 		for my $part (@parts)
 		{
 			$sum += $part->[0];
-			push @desc, $part->[1] . " (" . $part->[0] . ")";
+			push @desc, $part->[1];
 		}
 		$self->reply($args, sprintf("%s rolled %d: %s", $who, $sum, join(" + ", @desc)));
 		return;
@@ -90,6 +90,23 @@ sub said
 		close $FH;
 		return;
 	}
+	if($self->Bot::BasicBot::Pluggable::Module::Utils::matchesCommand($args, 'loadDiceStatsFromFile'))
+	{
+		$self->loadStats();
+	}
+}
+
+sub loadStats
+{
+	my ($self) = @_;
+	open my $FH, '<', "/home/goodi/dnd.dice.stats" or die;
+	while (my $line = <$FH>)
+	{
+		chomp $line;
+		my($time, $who, $stat, $val) = split(/\t/, $line);
+		$self->bot()->{'dicestats'}->{$who}->{$stat} = $val;
+	}
+	close $FH;
 }
 
 sub init
