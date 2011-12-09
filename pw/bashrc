@@ -24,9 +24,11 @@ function pw () {
 		return
 	fi
 
-	/home/goodi/bin/pw/pw "$@"
-	read -t 5 _
-	/usr/bin/clear
+	(( NOCLIP )) &&  {
+		/home/goodi/bin/pw/pw "$@"
+		read -t 5 _
+		/usr/bin/clear
+	} || /home/goodi/bin/pw/pw "$@" | xclip -i
 
 	# Append new sites to db unless $3 is set
 	if [[ -z $3 ]] ; then
@@ -42,4 +44,4 @@ function gmail () { pw gmail."${1}" 20 ; }
 
 unset HISTFILE
 cd /home/goodi/bin/pw
-pw this
+NOCLIP=1 pw this
