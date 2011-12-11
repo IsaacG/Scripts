@@ -39,9 +39,9 @@ c="${1:- 0}"
 	q=".separator ' |'\n"
 	q+="SELECT i.url,f.title,i.title FROM rss_item AS i JOIN rss_feed AS f ON i.feedurl = f.rssurl "
 	q+="WHERE unread = 1 AND deleted = 0 AND feedurl = '%s' ORDER BY   pubDate ASC;"
-	grep '^http.*tumblr' /mnt/sda1/tumblr.urls | sed 's/ .*//' | \
+	grep '^http.*tumblr' ~/sd/tumblr.urls | sed 's/ .*//' | \
 	while read feed ; do
-		printf "$q" "$feed" | sqlite3 /mnt/sda1/tumblr.cache.db
+		printf "$q" "$feed" | sqlite3 ~/sd/tumblr.cache.db
 	done
 )
 # vim:sw=4:ts=4
