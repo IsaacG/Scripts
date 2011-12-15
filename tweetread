@@ -46,7 +46,7 @@ type xclip &>/dev/null && has_xclip=1 || has_xclip=0
 print () {
 	cur_reset
 	[[ ${save[index]} ]] && color="$_cyan" || color="$_def"
-	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def"
+	printf "%s%d/%d %s%s%s\n" "$_red" $((index+1)) $max "$color" "${lines[index]}" "$_def" | fmt -w $(tput cols)
 	
 	# Find all URLs and xclip them
 	urls=()
