@@ -1,0 +1,15 @@
+#!/usr/bin/awk -f
+
+# Parse the output of iwlist scan and show the stuff I care about
+
+function display() {
+	printf "%2s  %1s %19s %9s   %s\n", q, e, ap, m, n|"sort -n"
+}
+
+$1 == "Cell" && f  {display()}
+$1 == "Cell"       {ap = $5; f=1}
+$1 ~  /^Quality=/  {split($1, a, /[=/]/); q=a[2]}
+$1 == "Encryption" {if($2 == "key:on") e="!"; else e="o"}
+$1 ~  /^ESSID:/    {split($0, a, /:/); n=a[2]}
+$1 ~  /^Mode:/     {split($0, a, /:/); m=a[2]}
+END{display()}
