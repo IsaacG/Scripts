@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Scan for wifi, awk/parse, present a selection to the user
+
+parse='
+	function display() {
+		printf "%2s  %1s %19s %9s   %s\n", q, e, ap, m, n|"sort -n"
+	}
+
+	$1 == "Cell" && f  {display()}
+	$1 == "Cell"       {ap = $5; f=1}
+	$1 ~  /^Quality=/  {split($1, a, /[=/]/); q=a[2]}
+	$1 == "Encryption" {if($2 == "key:on") e="!"; else e="o"}
+	$1 ~  /^ESSID:/    {split($0, a, /:/); n=a[2]}
+	$1 ~  /^Mode:/     {split($0, a, /:/); m=a[2]}
+	END{display()}
+'
+
+IFS=$'\n' opt=($(sudo iwlist wlan0 scan | awk "$parse" | tr -d '"'))
+
+select line in "${opt[@]}" ; do
+	IFS=$' \n' read q e ap mode essid <<< "$line"
+	sudo iwconfig wlan0 ap "$ap" essid "$essid"
+	sleep 1
+	sudo iwconfig wlan0
+	break
+done
