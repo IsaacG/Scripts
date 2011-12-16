@@ -20,8 +20,8 @@ checkPrograms ()
 
 checkArgs ()
 {
-	from="${1:- $HOME/usb/DCIM/101NCD40}"
-	to="${2:- $HOME/PicsToSort}"
+	from="${1:-$HOME/usb/DCIM/101NCD40}"
+	to="${2:-$HOME/PicsToSort}"
 	to="${to%/}"
 	num="${from##*/10}"
 	num="${num%NCD40}"
