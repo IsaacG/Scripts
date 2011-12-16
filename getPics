@@ -3,8 +3,6 @@
 shopt -s nullglob
 shopt -s nocaseglob
 
-[[ -f "$HOME/config/getPics" ]] && . "$HOME/config/getPics"
-
 declare -A destinations
 
 die ()
@@ -22,8 +20,8 @@ checkPrograms ()
 
 checkArgs ()
 {
-	from="${1:-$from}"
-	to="${2:-$to}"
+	from="${1:- $HOME/usb/DCIM/101NCD40}"
+	to="${2:- $HOME/PicsToSort}"
 	to="${to%/}"
 	num="${from##*/10}"
 	num="${num%NCD40}"
@@ -64,7 +62,7 @@ processFolder ()
 			[[ ! -d $pt ]] && { mkdir "$pt" || die "Failed to create directory $pt" ; }
 			[[ -e $pt/$fnam ]] && { echo "$fnam already exists in $pt" ; continue ; }
 
-			mv -n "$item" "$pt/${fnam/_/_$num}" 2>/dev/null || { 
+			mv -f "$item" "$pt/${fnam/_/_$num}" 2>/dev/null || { 
 				echo "Failed to mv $item to $pt" ; continue ; 
 			}
 		fi
@@ -79,36 +77,19 @@ initDestinations ()
 		mkdir "$dir/bu"
 		mv "$dir/"*.{JPG,JPEG} "$dir/bu"
 
-		read -n 1 -p "Make selection dir with symlinks for $dir? [y/N] "
-		printf "\n"
-		if [[ $REPLY = [yY] ]] ; then
-			mkdir "$dir/selection" || die "Failed to make dir"
-			( cd "$dir/bu" ; for i in * ; do ln "$i" ../selection ; done ; )
-		fi
-
-		read -n 1 -p "Make a small dir for $dir? [y/N] "
-		printf "\n"
-		if [[ $REPLY = [yY] ]] ; then
-			mkdir "$dir/small" || die "Failed to make dir"
-			read -n 1 -p "Make selection-small dir with symlinks for $dir? [y/N] "
+		mkdir "$dir/small" || die "Failed to make dir"
+		(
+			cd "$dir/bu"
+			exiftran -ai *
+			all=(*)
+			for i in * ; do 
+				convert -resize 35%x35% "$i" ../small/"$i" 
+				printf "\r%d%%" $(( 100 * ++c / ${#all[@]} ))
+			done 
 			printf "\n"
-			if [[ $REPLY = [yY] ]] ; then
-				mkdir "$dir/selection-small" || die "Failed to make dir"
-			fi
-			(
-				cd "$dir/bu"
-				all=(*)
-				for i in * ; do 
-					convert -resize 35%x35% "$i" ../small/"$i" 
-					printf "\r%d%%" $(( 100 * ++c / ${#all[@]} ))
-				done 
-				printf "\n"
-			)
-			if [[ -d "$dir/selection-small" ]] ; then
-				( cd "$dir/small" ; for i in * ; do ln "$i" ../selection-small ; done ; )
-			fi
+			printf "%s\n" *.* > ../all.list
+		)
 
-		fi
 
 	done
 }
