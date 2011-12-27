@@ -5,11 +5,11 @@
 
 [[ -p ~/downloadqueue ]] || { echo "Missing fifo" ; exit ; }
 
-cd ~/Downloads/podcasts/ || exit
+#cd ~/Downloads/podcasts/ || exit
 
 trap 'kill $pidA $pidB' SIGINT SIGTERM
 
-while : ; do while read -r ; do wget -nc -- "$REPLY" ; done < ~/downloadqueue ; sleep 5; done &
+while : ; do while read -r ; do wget --tries=3 -nc -- "$REPLY" ; done < ~/downloadqueue ; sleep 5; done &
 pidA=$!
 
 cur=$(xclip -o)
