@@ -43,7 +43,7 @@ alias encDown='fusermount -u ~/enc/data/'
 
 alias amixer='sudo amixer'
 alias io='iotop -d 30 -o -P -k'
-alias s='[[ $TERM = *screen* ]] || ssh goodi.gotdns.com'
+alias s='[[ $TERM = *screen* ]] || ssh goodi@goodi.gotdns.com'
 alias pw='$HOME/bin/pw/setup'
 alias x="while sleep 1 ; do date >> ~/x.log ; startx >>~/x.log 2>&1 & wait || break ; sleep 10 || break ; done"
 update () 
