@@ -1,5 +1,5 @@
 function pw () {
-	db="/home/goodi/bin/pw/db"	
+	db="$HOME/bin/pw/db"	
 
 	# -d for dump database or lookup item in database (grep)
 	if [[ $1 = "-d" ]] ; then
@@ -15,7 +15,7 @@ function pw () {
 	if [[ $1 = "-l" ]] && [[ -n  $2 ]] ; then
 		cnt=$( /bin/grep -i "$2" $db | wc -l )
 		if (( cnt == 1 )) ; then
-			/home/goodi/bin/pw/pw $( /bin/grep -i "$2" $db ) $3
+			$HOME/bin/pw/pw $( /bin/grep -i "$2" $db ) $3
 			read -t 5 _
 			/usr/bin/clear
 		else
@@ -25,10 +25,10 @@ function pw () {
 	fi
 
 	(( NOCLIP )) &&  {
-		/home/goodi/bin/pw/pw "$@"
+		$HOME/bin/pw/pw "$@"
 		read -t 5 _
 		/usr/bin/clear
-	} || /home/goodi/bin/pw/pw "$@" | xclip -i
+	} || $HOME/bin/pw/pw "$@" | xclip -i
 
 	# Append new sites to db unless $3 is set
 	if [[ -z $3 ]] ; then
@@ -43,5 +43,5 @@ function pw () {
 function gmail () { pw gmail."${1}" 20 ; }
 
 unset HISTFILE
-cd /home/goodi/bin/pw
+cd $HOME/bin/pw
 NOCLIP=1 pw this
