@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Basic stuff
+opts=(-A 'Firefox' -F addprivacy=1 -F MAX_FILE_SIZE=7168000 -F rules=yes)
+# The file to upload
+opts+=(-F "upload=@$1")
+# How long to store it
+# 1=30 Minutes; 2=1 Hour; 3=3 Hours; 4=6 Hours; 5=12 Hours; 6=1 Day; 7=3 Days; 8=7 Days; 9=unlimited
+opts+=(-F storetime=6)
+
+curl "${opts[@]}" 'http://picpaste.com/upload.php' | vilistextum t - | fgrep -e "Picture URL:" -e "Deletelink:"
+
