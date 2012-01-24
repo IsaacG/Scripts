@@ -9,7 +9,7 @@
 
 trap 'kill $pidA $pidB' SIGINT SIGTERM
 
-while : ; do while read -r ; do wget --tries=3 -nc -- "$REPLY" ; done < ~/downloadqueue ; sleep 5; done &
+while : ; do while read -r ; do wget -q --tries=3 -nc -- "$REPLY" ; done < ~/downloadqueue ; sleep 5; done &
 pidA=$!
 
 cur=$(xclip -o)
