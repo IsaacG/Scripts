@@ -28,7 +28,7 @@ function pw () {
 		$HOME/bin/pw/pw "$@"
 		read -t 5 _
 		/usr/bin/clear
-	} || $HOME/bin/pw/pw "$@" | xclip -i
+	} || $HOME/bin/pw/pw "$@" | tr -d '\n' | xclip -i
 
 	# Append new sites to db unless $3 is set
 	if [[ -z $3 ]] ; then
