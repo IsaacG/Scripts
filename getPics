@@ -25,8 +25,9 @@ checkArgs ()
 	from="${1:-$HOME/usb/DCIM/102NCD40}"
 	to="${2:-$HOME/PicsToSort}"
 	to="${to%/}"
-	num="${from##*/10}"
-	num="${num%NCD40}"
+	num="${from##*/1?}"
+	num="${num%/}"
+	num="${num%NCD?0}"
 
 	[[ -d $from ]] || die "$from not a dir"
 	[[ -d $to ]]   || die "$to not a dir"
