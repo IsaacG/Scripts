@@ -1,0 +1,40 @@
+#!/bin/bash
+
+[[ $DISPLAY ]] || noxclip=1
+salt=./salt2
+db=./db2
+
+pp () 
+{ 
+  # Check that 0 < number of arg <= 3
+  (( $# > 0 )) && (( $# < 4 )) || return
+
+  # Read the args into vars
+  site="$1"
+  len="${2:-20}"
+  [[ $3 ]] && rep=0 || rep=1
+
+  # Load vars from the DB if they are not specified
+  if (( $# == 1 )) ; then
+    while read s l r ; do
+      [[ $s = $site ]] || continue
+      len="$l"
+      rep="$r"
+    done < "$db"
+  fi
+
+  # Password generation
+  (( $rep )) && pat='!+_' || pat='MYZ'
+  input="$( < "$salt" ) $site $len $MAINPASSWORD"
+  pw=$( sha512sum <<< "$input" | sed 's/ .*//' | base64 | tr MYZ "$pat" | head -c "$len" )
+
+  (( noxclip )) && printf "%s\n" "$pw" || xclip -i <<< "$pw"
+
+  # Write the args to the DB
+  grep -q "^$site " "$db" && return
+  read -p "Record to DB? [n]"
+  [[ $REPLY = y ]] || return
+  printf "%s %d %d\n" "$site" "$len" "$rep" >> "$db"
+}
+
+pp "$@"

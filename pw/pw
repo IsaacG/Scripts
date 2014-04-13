@@ -8,7 +8,7 @@ use CGI;
 use Digest::MD5  qw/md5 md5_hex md5_base64/;
 use Digest::SHA1 qw/sha1 sha1_hex sha1_base64/;
 
-use constant SALT_FILE => $ENV{'HOME'} . '/bin/pw/salt';
+use constant SALT_FILE => './salt';
 my $PW_LENGTH = 8;
 
 sub makePassword

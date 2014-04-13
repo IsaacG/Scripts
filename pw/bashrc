@@ -1,10 +1,12 @@
+pwpath=~/git/Scripts/pw
+
 function pw () {
-	db="$HOME/bin/pw/db"	
+	db="$pwpath/db"	
 
 	# -d for dump database or lookup item in database (grep)
 	if [[ $1 = "-d" ]] ; then
 		if [[ -n $2 ]] ; then
-			/bin/grep -i "$2" $db
+			grep -i "$2" $db
 		else
 			cat "$db"
 		fi
@@ -13,22 +15,22 @@ function pw () {
 
 	# -l for lookup pw -> search db and show pw if one match only
 	if [[ $1 = "-l" ]] && [[ -n  $2 ]] ; then
-		cnt=$( /bin/grep -i "$2" $db | wc -l )
+		cnt=$( grep -i "$2" $db | wc -l )
 		if (( cnt == 1 )) ; then
-			$HOME/bin/pw/pw $( /bin/grep -i "$2" $db ) $3
+			"$pwpath"/pw $( grep -i "$2" $db ) $3
 			read -t 5 _
-			/usr/bin/clear
+			clear
 		else
-			/bin/grep -i "$2" $db
+			grep -i "$2" $db
 		fi
 		return
 	fi
 
 	(( NOCLIP )) &&  {
-		$HOME/bin/pw/pw "$@"
+		$pwpath/pw "$@"
 		read -t 5 _
-		/usr/bin/clear
-	} || $HOME/bin/pw/pw "$@" | tr -d '\n' | xclip -i
+		clear
+	} || $pwpath/pw "$@" | tr -d '\n' | xclip -i
 
 	# Append new sites to db unless $3 is set
 	if [[ -z $3 ]] ; then
@@ -41,7 +43,9 @@ function pw () {
 }
 
 function gmail () { pw gmail."${1}" 20 ; }
+pp () { ./pp "$@" ; }
 
 unset HISTFILE
-cd $HOME/bin/pw
+cd "$pwpath"
 NOCLIP=1 pw this
+[[ $DISPLAY ]] || NOCLIP=1
