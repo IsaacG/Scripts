@@ -24,7 +24,7 @@ pp ()
   fi
 
   # Password generation
-  (( $rep )) && pat='!+_' || pat='MYZ'
+  (( rep )) && pat='!+_' || pat='MYZ'
   input="$( < "$salt" ) $site $len $MAINPASSWORD"
   pw=$( sha512sum <<< "$input" | sed 's/ .*//' | base64 | tr MYZ "$pat" | head -c "$len" )
 
