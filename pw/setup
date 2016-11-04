@@ -6,7 +6,7 @@ stty -echo; read -e MAINPASSWORD; stty echo
 export MAINPASSWORD
 export TMOUT=300
 /usr/bin/clear
-bash --rcfile ./bashrc
+bash --rcfile $HOME/git/Scripts/pw/bashrc
 /usr/bin/clear
 unset MAINPASSWORD
 unset TMOUT

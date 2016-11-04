@@ -4,8 +4,8 @@
 salt=./salt2
 db=./db2
 
-pp () 
-{ 
+pp ()
+{
   # Check that 0 < number of arg <= 3
   (( $# > 0 )) && (( $# < 4 )) || return
 

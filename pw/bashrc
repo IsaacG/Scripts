@@ -1,7 +1,7 @@
-pwpath=~/git/Scripts/pw
+pwpath=$HOME/git/Scripts/pw
 
 function pw () {
-	db="$pwpath/db"	
+	db="$pwpath/db"
 
 	# -d for dump database or lookup item in database (grep)
 	if [[ $1 = "-d" ]] ; then
@@ -37,7 +37,7 @@ function pw () {
 		if ! grep -Fx "$1" "$db" &>/dev/null ; then
 			echo 'Add to DB? [y/N]'
 			read y
-			[[ $y = "y" || $y = "Y" ]] && echo "$1" >> "$db" && echo "Added $i to the database" 
+			[[ $y = "y" || $y = "Y" ]] && echo "$1" >> "$db" && echo "Added $i to the database"
 		fi
 	fi
 }
@@ -47,5 +47,8 @@ pp () { ./pp "$@" ; }
 
 unset HISTFILE
 cd "$pwpath"
-NOCLIP=1 pw this
+noxclip=1 pp this
 [[ $DISPLAY ]] || NOCLIP=1
+
+complete -W "$(< $pwpath/db2 )" pp
+complete -W "$(< $pwpath/db )" pw
